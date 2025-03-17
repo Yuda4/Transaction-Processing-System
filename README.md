@@ -102,3 +102,9 @@ tps/
     `\d <table-name>` - Describe a table.
 
     `SELECT * FROM transactions;` - shows **transactions** table's records.
+
+Exmaple of records in table:
+
+![Screenshot 2025-03-18 at 0 14 36](https://github.com/user-attachments/assets/9ba7a2c1-9c24-44dd-b089-63002957466b)
+
+   
