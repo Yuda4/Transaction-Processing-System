@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tps-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: tps
+  template:
+    metadata:
+      labels:
+        app: tps
+    spec:
+      containers:
+        - name: app
+          image: tps-app:latest
+          ports:
+            - containerPort: 8000
