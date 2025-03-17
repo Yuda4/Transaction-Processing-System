@@ -1,19 +1,76 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tps-app
+  name: transaction-service
+  labels:
+    app: transaction-service
 spec:
-  replicas: 3
+  replicas: 3  # Scalable: Run 3 replicas for high availability
   selector:
     matchLabels:
-      app: tps
+      app: transaction-service
   template:
     metadata:
       labels:
-        app: tps
+        app: transaction-service
     spec:
       containers:
-        - name: app
-          image: tps-app:latest
+        - name: transaction-service
+          image: containerRegistery/transaction-service:latest
           ports:
             - containerPort: 8000
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "500m"  # Define minimum resources
+            limits:
+              memory: "512Mi"
+              cpu: "1"  # Define maximum resources
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readiness
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+      strategy:
+        type: RollingUpdate  # Enable rolling updates for zero-downtime deployments
+        rollingUpdate:
+          maxSurge: 1
+          maxUnavailable: 1
+---
+apiVersion: apps/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: transaction-service-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: transaction-service
+  minReplicas: 2  # Min replicas
+  maxReplicas: 5  # Max replicas
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80  # Scale if CPU utilization exceeds 80%
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: transaction-service-pdb
+spec:
+  minAvailable: 2  # Ensure at least 2 pods are available during voluntary disruptions
+  selector:
+    matchLabels:
+      app: transaction-service
